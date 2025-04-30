@@ -13,7 +13,9 @@
 				    <version>0.0.1-SNAPSHOT</version>
 				    <name>FlyAway Airlines</name>
 				    <description>Backend for FlyAway Airlines booking system</description>
-				    <properties>
+	<packaging>jar</packaging>
+
+	<properties>
 				        <java.version>21</java.version>
 				    </properties>
 				   <dependencies>
@@ -94,6 +96,11 @@
 				                    <encoding>UTF-8</encoding>
 				                </configuration>
 				            </plugin>
+							<plugin>
+								<groupId>org.springframework.boot</groupId>
+								<artifactId>spring-boot-maven-plugin</artifactId>
+							</plugin>
 				        </plugins>
 				    </build>
+
 				</project>
