@@ -1,39 +1,38 @@
 package com.example.flyawayairlines.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+        import jakarta.servlet.FilterChain;
+        import jakarta.servlet.ServletException;
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+        import org.springframework.stereotype.Component;
+        import org.springframework.web.filter.OncePerRequestFilter;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+        import java.io.IOException;
 
-@Component
-public class JwtFilter extends OncePerRequestFilter {
+        @Component
+        public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+            private final JwtTokenProvider jwtTokenProvider;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+            public JwtFilter(JwtTokenProvider jwtTokenProvider) {
+                this.jwtTokenProvider = jwtTokenProvider;
+            }
 
-        String token = request.getHeader("Authorization");
-
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-            if (jwtTokenProvider.validateToken(token)) {
-                String username = jwtTokenProvider.getUsernameFromToken(token);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, null);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            @Override
+            protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                    throws ServletException, IOException {
+                String token = jwtTokenProvider.resolveToken(request);
+                if (token != null && jwtTokenProvider.validateToken(token)) {
+                    UserDetails userDetails = jwtTokenProvider.getUserDetails(token);
+                    UsernamePasswordAuthenticationToken authentication =
+                            (UsernamePasswordAuthenticationToken) jwtTokenProvider.getAuthentication(userDetails);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+                filterChain.doFilter(request, response);
             }
         }
-
-        filterChain.doFilter(request, response);
-    }
-}
